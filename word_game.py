@@ -11,10 +11,10 @@ with open(os.path.join(dir_path, 'english_words.pkl'), 'rb') as fr:
     all_words = pickle.load(fr)
 
 with open(os.path.join(dir_path, 'char_frequencies.pkl'), 'rb') as fr:
-    char_frequencies = pickle.load(fr)
+    global_char_frequencies = pickle.load(fr)
 
 WORD_LENGTH = 5
-NUM_TRIALS = 1000
+NUM_TRIALS = 10000
 valid_length_count = sum(map(lambda w: len(w) != WORD_LENGTH, all_words))
 if valid_length_count > 0:
     print(f'Not all words have expected length {WORD_LENGTH}')
@@ -46,7 +46,7 @@ def filter_out_words(words, feedback):
         elif feedback_response == Feedback.INCORRECT:
             new_words = [word for word in new_words if guessed_char not in word]
         elif feedback_response == Feedback.TOO_MANY_OCCURRENCES:
-            new_words = [word for word in new_words if word.count(guessed_char) == num_occurrences]
+            new_words = [word for word in new_words if word[idx] != guessed_char and word.count(guessed_char) == num_occurrences]
 
     return new_words
 
@@ -62,7 +62,7 @@ def guess_next_word(remaining_words, strategy, verbose=True):
             print(f'Random Guess: {guess}')
         return guess
 
-    elif strategy == 'high_frequency':
+    elif strategy == 'high_frequency_global':
         best_guess, max_freq = None, 0
 
         for word in remaining_words:
@@ -71,7 +71,7 @@ def guess_next_word(remaining_words, strategy, verbose=True):
             for char in word:
                 if char not in char_dict:
                     char_dict[char] = True
-                    freq_sum += char_frequencies[char]
+                    freq_sum += global_char_frequencies[char]
 
             if freq_sum > max_freq:
                 max_freq = freq_sum
@@ -82,6 +82,36 @@ def guess_next_word(remaining_words, strategy, verbose=True):
 
         return best_guess
 
+    elif strategy == 'high_frequency_remaining':
+        best_guess, max_freq = None, 0
+
+        char_freq = {}
+        for word in remaining_words:
+            for char in word:
+                if char in char_freq:
+                    char_freq[char] += 1
+                else:
+                    char_freq[char] = 1
+
+        for word in remaining_words:
+            char_dict = {}
+            freq_sum = 0
+            for char in word:
+                if char not in char_dict:
+                    char_dict[char] = True
+                    freq_sum += char_freq[char]
+
+            if freq_sum > max_freq:
+                max_freq = freq_sum
+                best_guess = word
+
+        if verbose:
+            print(f'Best Guess: {best_guess} (Frequency: {max_freq})')
+
+        return best_guess
+
+
+
     elif strategy == 'low_frequency':
         best_guess, min_freq = None, sys.maxsize
 
@@ -91,7 +121,7 @@ def guess_next_word(remaining_words, strategy, verbose=True):
             for char in word:
                 if char not in char_dict:
                     char_dict[char] = True
-                    freq_sum += char_frequencies[char]
+                    freq_sum += global_char_frequencies[char]
 
             if freq_sum < min_freq:
                 min_freq = freq_sum
@@ -126,13 +156,13 @@ def guess_next_word(remaining_words, strategy, verbose=True):
 
 def get_feedback(guess, target_word):
     feedback = {}
-    wrong_place_occurrences = {char: 0 for char in guess}
+    occurrences = {char: 0 for char in guess}
 
     for i, (guess_char, target_char) in enumerate(zip(guess, target_word)):
         if guess_char != target_char:
             if guess_char in target_word:
-                wrong_place_occurrences[guess_char] += 1
-                if wrong_place_occurrences[guess_char] <= target_word.count(guess_char):
+                occurrences[guess_char] += 1
+                if occurrences[guess_char] <= target_word.count(guess_char):
                     feedback[i] = (guess_char, Feedback.WRONG_PLACE)
                 else:
                     feedback[i] = (guess_char, Feedback.TOO_MANY_OCCURRENCES, target_word.count(guess_char))
@@ -208,15 +238,11 @@ def word_game(vocab, verbose=True, word_length=5, target=None,
 
 
 def main():
-    # word_game(all_words, word_length=WORD_LENGTH, initial_strategy='most_vowels', strategy='high_frequency')
-    # import time
-    # start = time.time()
-    guesses_dist = [word_game(all_words, word_length=WORD_LENGTH, initial_strategy='most_vowels', strategy='high_frequency', verbose=False) for _ in range(NUM_TRIALS)]
+    # word_game(all_words, word_length=WORD_LENGTH, initial_strategy='random', strategy='high_frequency_remaining')
+    guesses_dist = [word_game(all_words, word_length=WORD_LENGTH,
+                              initial_strategy='most_vowels', strategy='high_frequency_global', verbose=False)
+                    for _ in range(NUM_TRIALS)]
     print(sum(guesses_dist) / NUM_TRIALS)
-    # end = time.time()
-    # print(end - start)
-    # plt.hist(guesses_dist, bins=30)
-    # plt.show()
 
 
 if __name__ == '__main__':

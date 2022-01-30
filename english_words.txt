@@ -336,7 +336,6 @@ avert
 avian
 avion
 avoid
-avoir
 avows
 await
 awake
@@ -351,6 +350,7 @@ axial
 axils
 axing
 axiom
+axion
 axles
 axons
 ayahs
@@ -2894,7 +2894,6 @@ intis
 intro
 inure
 inurn
-ioctl
 iodic
 ionic
 iotas
@@ -6414,7 +6413,6 @@ whore
 whorl
 whose
 whoso
-whsle
 whups
 wicks
 widen
@@ -6479,6 +6477,7 @@ wooed
 wooer
 woofs
 wools
+wooly
 woops
 woozy
 words
@@ -6522,13 +6521,6 @@ xeric
 xerox
 xrefs
 xterm
-xviii
-xxiii
-xxvii
-xxxii
-xxxiv
-xxxix
-xxxvi
 xylem
 xylol
 yacht
